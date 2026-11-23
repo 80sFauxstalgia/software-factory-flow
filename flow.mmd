@@ -1,0 +1,55 @@
+flowchart TD
+  subgraph PERSON["The person (phone)"]
+    NOTE["Writes a note or an idea"]
+    CARD["Answers a card:<br/>approve, pick a look, say yes to a release"]
+  end
+
+  subgraph DESK["Decision desk (web app)"]
+    INBOX["Notes inbox"]
+    CARDS["Cards waiting for an answer"]
+    FEED["Factory page:<br/>what is queued, building, stuck, done"]
+  end
+
+  subgraph INTAKE["Intake"]
+    SPEC["Spec writer (model)<br/>reads the code first, writes one spec"]
+    QUEUE["Queue<br/>one JSON file per item"]
+  end
+
+  subgraph LINE["The line (a script runs every minute)"]
+    PICK["Dispatcher (plain code)<br/>order, slots, disk, model budget"]
+    BUILD["Build<br/>one worker in its own git worktree, opens a PR"]
+    REVIEW["Review<br/>one fresh run per facet:<br/>code, UX, UI, security"]
+    VETO["Second review (stronger model)<br/>only for risky paths:<br/>auth, payments, migrations, factory scripts"]
+    FIX["Fix round<br/>findings go back to a builder"]
+    ONEWAY{"Touches a one-way path?<br/>settings, secrets, schedulers"}
+    GATE["Merge gate (plain code)<br/>runs the repo's tests, then merges"]
+    DEPLOY["Deploy<br/>batched, staging only"]
+    DONE["Done"]
+  end
+
+  subgraph CARE["Upkeep (hourly, plain code first)"]
+    BEAT["Heartbeat<br/>checks every stage for faults"]
+    FIXER["Fixer (model)<br/>repairs the factory's own scripts"]
+    FIXREV["Second review of every fixer change"]
+    LIST["Improvement list<br/>one line per known gap"]
+    DIAG["Stuck-item diagnosis (planned)<br/>why it stopped, what happens next"]
+  end
+
+  NOTE --> INBOX --> SPEC --> QUEUE --> PICK --> BUILD --> REVIEW
+  REVIEW -- "changes needed" --> FIX --> REVIEW
+  REVIEW -- "risky paths" --> VETO
+  VETO -- "changes needed" --> FIX
+  REVIEW -- "all facets pass" --> ONEWAY
+  VETO -- "approve" --> ONEWAY
+  ONEWAY -- "yes" --> CARDS --> CARD --> GATE
+  ONEWAY -- "no" --> GATE
+  GATE -- "tests fail" --> FIX
+  GATE --> DEPLOY --> DONE
+  DONE --> FEED
+  PICK --> FEED
+
+  DONE -. "every stage is read by" .-> BEAT
+  BEAT -- "new fault" --> FIXER --> FIXREV -- "approve" --> INSTALL["Change installed<br/>into the line's scripts"]
+  LIST --> FIXER
+  BEAT -- "item parked" --> DIAG --> CARDS
+  FIXER -. "what it could not fix" .-> LIST
