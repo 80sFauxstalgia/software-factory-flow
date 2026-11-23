@@ -56,8 +56,8 @@ flowchart TD
   DONE --> FEED
   PICK --> FEED
 
-  BEAT -. "reads" .-> LINE
-  BEAT -- "new fault" --> FIXER --> FIXREV -- "approve" --> LINE
+  DONE -. "every stage is read by" .-> BEAT
+  BEAT -- "new fault" --> FIXER --> FIXREV -- "approve" --> INSTALL["Change installed<br/>into the line's scripts"]
   LIST --> FIXER
   BEAT -- "item parked" --> DIAG --> CARDS
   FIXER -. "what it could not fix" .-> LIST
